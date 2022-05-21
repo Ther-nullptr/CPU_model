@@ -2,8 +2,8 @@
 module ALUControl(OpCode, Funct, ALUCtrl, Sign);
 	input [5:0] OpCode;
 	input [5:0] Funct;
-	output reg [4:0] ALUCtl;
-	output Sign;
+	output reg [4:0] ALUCtrl;
+	output reg Sign;
 	
 	// Your code below
 
@@ -81,6 +81,7 @@ module ALUControl(OpCode, Funct, ALUCtrl, Sign);
     // parameter setsub_ctrl = 5'b11010;
     
     // to decide the signed & unsigned
+    // I type
     always @(*) begin
         case(OpCode)
             addiu_op: Sign <= 0;
@@ -89,6 +90,7 @@ module ALUControl(OpCode, Funct, ALUCtrl, Sign);
         endcase
     end
     
+    // R type
     always @(*) begin
         if (OpCode == 6'h00) begin
             case(Funct)

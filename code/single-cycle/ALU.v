@@ -20,9 +20,6 @@ module ALU(in1, in2, ALUCtrl, Sign, out, zero);
     parameter srl_ctrl = 5'b10000; // >>
     parameter sra_ctrl = 5'b10001; // >>(a)
     
-    // to detect signed & unsigned
-    
-    
     assign zero = (out == 0); // when out is 0, zero is 1
     
     // IMPORTANT! although the signed and unsigned settings has different results in +,-,&,|..., but they share the same representations
@@ -49,10 +46,10 @@ module ALU(in1, in2, ALUCtrl, Sign, out, zero);
             xor_ctrl: out <= (in1 ^ in2);
             sll_ctrl: out <= (in2 << in1);
             srl_ctrl: out <= (in2 >> in1);
+            // important!! if you want to add shamt options, you should load the last 16 bits and get the shamt[10:6]
             sra_ctrl: out <= ({{32{in2[31]}}, in2} >> in1); // the highst bit is always same as signal-bit
-            // but there is a problem: sra is only used in signed cases ??
-            
-            
+            // when it comes to unsigned numbers, sra_ctrl may get wrong answers
+            // see: https://chortle.ccsu.edu/AssemblyTutorial/Chapter-14/ass14_14.html
             default: out <= 0;
         endcase
     end

@@ -243,8 +243,8 @@ module Controller(reset, clk, OpCode, Funct,
                                 next_state <= sIF;
                             end
                     endcase
-                 end
-         end
+                end
+        end
     end
     
     
