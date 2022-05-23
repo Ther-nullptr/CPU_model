@@ -78,19 +78,11 @@ module Control(OpCode,
     always @(*) begin
         // PCSrc
         case(OpCode)
-            j_op: begin // all the R type
+            j_op,jal_op: begin // all the R type
                 PCSrc <= 2'b01;
             end
             
-            jal_op: begin
-                PCSrc <= 2'b01;
-            end
-            
-            jr_op: begin
-                PCSrc <= 2'b10;
-            end
-            
-            jalr_op: begin
+            jr_op,jalr_op: begin
                 PCSrc <= 2'b10;
             end
             
@@ -105,22 +97,6 @@ module Control(OpCode,
                 Branch <= 1'b1;
             end
             
-            j_op: begin // all the R type
-                PCSrc <= 1'bx;
-            end
-            
-            jal_op: begin
-                PCSrc <= 1'bx;
-            end
-            
-            jr_op: begin
-                PCSrc <= 1'bx;
-            end
-            
-            jalr_op: begin
-                PCSrc <= 1'bx;
-            end
-            
             default:begin
                 PCSrc <= 1'b0;
             end
@@ -128,19 +104,7 @@ module Control(OpCode,
         
         // RegWrite
         case(OpCode)
-            sw_op:begin
-                RegWrite <= 0;
-            end
-            
-            beq_op:begin
-                RegWrite <= 0;
-            end
-            
-            j_op:begin
-                RegWrite <= 0;
-            end
-            
-            jr_op:begin
+            sw_op,beq_op,j_op,jr_op:begin
                 RegWrite <= 0;
             end
             
@@ -155,28 +119,8 @@ module Control(OpCode,
                 RegDst <= 2'b01;
             end
             
-            jal_op:begin
+            jal_op,jalr_op:begin
                 RegDst <= 2'b10;
-            end
-            
-            jalr_op:begin
-                RegDst <= 2'b10;
-            end
-            
-            j_op:begin
-                RegDst <= 2'bxx;
-            end
-            
-            jr_op:begin
-                RegDst <= 2'bxx;
-            end
-            
-            sw_op:begin
-                RegDst <= 2'bxx;
-            end
-            
-            beq_op:begin
-                RegDst <= 2'bxx;
             end
             
             default:begin
@@ -212,42 +156,18 @@ module Control(OpCode,
                 MemtoReg <= 2'b01;
             end
             
-            jal_op:begin
-                MemtoReg <= 2'b01;
+            jal_op,jalr_op:begin
+                MemtoReg <= 2'b10;
             end
             
-            jalr_op:begin
-                MemtoReg <= 2'b01;
-            end
-            
-            sw_op:begin
-                MemtoReg <= 2'b01;
-            end
-            
-            beq_op:begin
-                MemtoReg <= 2'b01;
-            end
-            
-            j_op:begin
-                MemtoReg <= 2'b01;
-            end
-            
-            jr_op:begin
+            default:begin
                 MemtoReg <= 2'b01;
             end
         endcase
         
         // ALUSrc1
         case(OpCode)
-            sll_op:begin
-                ALUSrc1 <= 1;
-            end
-
-            srl_op:begin
-                ALUSrc1 <= 1;
-            end
-
-            sra_op:begin
+            sll_op,srl_op,sra_op:begin
                 ALUSrc1 <= 1;
             end
 

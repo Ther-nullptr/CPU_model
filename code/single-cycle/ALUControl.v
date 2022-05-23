@@ -1,13 +1,16 @@
 `timescale 1ns / 1ps
-module ALUControl(OpCode, Funct, ALUCtrl, Sign);
-	input [5:0] OpCode;
-	input [5:0] Funct;
-	output reg [4:0] ALUCtrl;
-	output reg Sign;
-	
-	// Your code below
-
-	reg [2:0] ALUOp;
+module ALUControl(OpCode,
+                  Funct,
+                  ALUCtrl,
+                  Sign);
+    input [5:0] OpCode;
+    input [5:0] Funct;
+    output reg [4:0] ALUCtrl;
+    output reg Sign;
+    
+    // Your code below
+    
+    reg [2:0] ALUOp;
     
     // MIPS Opcodes
     parameter lw_op  = 6'h23; // load word(I)
@@ -149,7 +152,7 @@ module ALUControl(OpCode, Funct, ALUCtrl, Sign);
         else
             ALUCtrl <= add_ctrl;
     end
-	     
-	// Your code above
-
+    
+    // Your code above
+    
 endmodule

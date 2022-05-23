@@ -1,14 +1,19 @@
 `timescale 1ns / 1ps
-module ALU(in1, in2, ALUCtrl, Sign, out, zero);
-	input [31:0] in1, in2;
-	input [4:0] ALUCtrl;
-	input Sign;
-	output reg [31:0] out;
-	output zero;
-	
-	// Your code below
-
-	// ALUCtrl signal
+module ALU(in1,
+           in2,
+           ALUCtrl,
+           Sign,
+           out,
+           zero);
+    input [31:0] in1, in2;
+    input [4:0] ALUCtrl;
+    input Sign;
+    output reg [31:0] out;
+    output zero;
+    
+    // Your code below
+    
+    // ALUCtrl signal
     parameter and_ctrl = 5'b00000; // &
     parameter or_ctrl  = 5'b00001; // |
     parameter add_ctrl = 5'b00010; // +
@@ -53,6 +58,6 @@ module ALU(in1, in2, ALUCtrl, Sign, out, zero);
             default: out <= 0;
         endcase
     end
-	// Your code above
-	
+    // Your code above
+    
 endmodule

@@ -4,26 +4,25 @@ module CPU(reset,
     
     //--------------Your code below-----------------------
 
-    // initialize
-    
     // PC
-    reg [31:0] PC_i;
+    reg [31:0] PC_i = 32'b0;
     wire [31:0] PC_o;
-    PC pc(
-        .reset(reset),
-        .clk(clk),
-        .PC_i(PC_i),
-        .PC_o(PC_o)
-        );
-    // TODO: PC_Write useful in single cycle?
 
+    PC pc(
+    .reset(reset),
+    .clk(clk),
+    .PC_i(PC_i),
+    .PC_o(PC_o)
+    );
+    // TODO: PC_Write useful in single cycle?
+    
     // instruction memory
     wire [31:0] Instruction;
     InstructionMemory instructionmemory(
-        .Address(PC_o),
-        .Instruction(Instruction)
+    .Address(PC_o),
+    .Instruction(Instruction)
     );
-
+    
     // select the instruction type
     reg [5:0] OpCode;
     reg [4:0] Rs;
@@ -35,28 +34,15 @@ module CPU(reset,
     reg [26:0] Address;
     always @(*) begin
         OpCode <= Instruction[31:26];
-        case(OpCode)
-            6'b000000:begin  // R
-                Rs <= Instruction[25:21];
-                Rt <= Instruction[20:16];
-                Rd <= Instruction[15:11];
-                Shamt <= Instruction[10:6];
-                Funct <= Instruction[5:0];
-            end
-
-            6'b0001x:begin
-                Rs <= Instruction[25:21];
-                Rt <= Instruction[20:16];
-                Immediate <= Instruction[15:0];
-            end
-
-            default:begin
-                Address <= Instruction[25:0];
-            end
-            
-        endcase
+        Rs    <= Instruction[25:21];
+        Rt    <= Instruction[20:16];
+        Rd    <= Instruction[15:11];
+        Shamt <= Instruction[10:6];
+        Funct <= Instruction[5:0];
+        Immediate <= Instruction[15:0];
+        Address <= Instruction[25:0];
     end
-
+    
     // controller
     wire [1:0] PCSrc;
     wire Branch;
@@ -70,20 +56,20 @@ module CPU(reset,
     wire ExtOp;
     wire LuOp;
     Control control(
-        .OpCode(OpCode),
-        .Funct(Funct),
-        .PCSrc(PCSrc),
-        .Branch(Branch),
-        .RegWrite(RegWrite),
-        .RegDst(RegDst),
-        .MemRead(MemRead),
-        .MemWrite(MemWrite),
-        .MemtoReg(MemtoReg),
-        .ALUSrc1(ALUSrc1),
-        .ALUSrc2(ALUSrc2),
-        .ExtOp(ExtOp),
-        .LuOp(LuOp)
-        );
+    .OpCode(OpCode),
+    .Funct(Funct),
+    .PCSrc(PCSrc),
+    .Branch(Branch),
+    .RegWrite(RegWrite),
+    .RegDst(RegDst),
+    .MemRead(MemRead),
+    .MemWrite(MemWrite),
+    .MemtoReg(MemtoReg),
+    .ALUSrc1(ALUSrc1),
+    .ALUSrc2(ALUSrc2),
+    .ExtOp(ExtOp),
+    .LuOp(LuOp)
+    );
     
     // * Mux of PC
     // ! the adder of PC(PC <= PC + 4)
@@ -96,22 +82,22 @@ module CPU(reset,
         PC_i <= PC_o + 4; // add 4 first
         case(PCSrc)
             2'b00:begin
-                if(Branch & Zero) begin
-                    PC_i <= PC_i + ImmExtShift; 
+                if (Branch & Zero) begin
+                    PC_i <= PC_i + ImmExtShift;
                 end
                 else begin
                     PC_i <= PC_i;
                 end
             end
-
+            
             2'b01: begin // j or jal
-                PC_i <= {PC_i[31:28], Instruction[26:0], 2'b00};
+                PC_i <= {PC_i[31:28], Address, 2'b00};
             end
-
+            
             2'b10: begin
                 PC_i <= Read_data1;
             end
-
+            
             default: begin
                 PC_i <= PC_i;
             end
@@ -120,43 +106,47 @@ module CPU(reset,
     
     // * Mux of reg source
     reg [4:0] Read_register1, Read_register2, Write_register;
-    reg [4:0] Write_register_data;
+    always @(*) begin
+        Read_register1 <= Rs;
+        Read_register2 <= Rt;
+    end
+    reg [31:0] Write_register_data;
     always @(*) begin
         case(RegDst)
-        2'b00:begin
-            Write_register <= Rt;
-        end
-
-        2'b01:begin
-            Write_register <= Rd;
-        end
-
-        default:begin
-            Write_register <= 5'b11111; // ra
-        end
+            2'b00:begin
+                Write_register <= Rt;
+            end
+            
+            2'b01:begin
+                Write_register <= Rd;
+            end
+            
+            default:begin
+                Write_register <= 5'b11111; // ra
+            end
         endcase
     end
-
+    
     // register file
     RegisterFile registerfile(
-        .reset(reset),
-        .clk(clk),
-        .Read_register1(Read_register1),
-        .Read_register2(Read_register2),
-        .Write_register(Write_register),
-        .Write_data(Write_register_data),
-        .Read_data1(Read_data1),
-        .Read_data2(Read_data2)
+    .reset(reset),
+    .clk(clk),
+    .Read_register1(Read_register1),
+    .Read_register2(Read_register2),
+    .Write_register(Write_register),
+    .Write_data(Write_register_data),
+    .Read_data1(Read_data1),
+    .Read_data2(Read_data2)
     );
     
     // immediate extension
     // ! it can directly generate the imm32 and left shift it
     ImmProcess immprocess(
-        .ExtOp(ExtOp),
-        .LuiOp(LuOp),
-        .Immediate(Immediate),
-        .ImmExtOut(ImmExtOut),
-        .ImmExtShift(ImmExtShift)
+    .ExtOp(ExtOp),
+    .LuiOp(LuOp),
+    .Immediate(Immediate),
+    .ImmExtOut(ImmExtOut),
+    .ImmExtShift(ImmExtShift)
     );
     
     
@@ -168,17 +158,17 @@ module CPU(reset,
             2'b0:begin
                 in1 <= Read_data1;
             end
-
+            
             2'b1:begin
                 in1 <= Shamt; // load the shamt
             end
         endcase
-
+        
         case(ALUSrc2)
             2'b0:begin
                 in2 <= Read_data2;
             end
-
+            
             2'b1:begin
                 in2 <= ImmExtOut;
             end
@@ -189,39 +179,39 @@ module CPU(reset,
     wire [4:0] ALUCtrl;
     wire Sign;
     ALUControl alucontrol(
-        .OpCode(OpCode),
-        .Funct(Funct),
-        .ALUCtrl(ALUCtrl),
-        .Sign(Sign)
+    .OpCode(OpCode),
+    .Funct(Funct),
+    .ALUCtrl(ALUCtrl),
+    .Sign(Sign)
     );
     
     // ALU
     wire [31:0] Out;
     
     ALU alu(
-        .ALUCtrl(ALUCtrl),
-        .in1(in1),
-        .in2(in2),
-        .Sign(Sign),
-        .out(Out),
-        .zero(Zero)
+    .ALUCtrl(ALUCtrl),
+    .in1(in1),
+    .in2(in2),
+    .Sign(Sign),
+    .out(Out),
+    .zero(Zero)
     );
     
     // data memory
     wire [31:0] Read_data;
     DataMemory datamemory(
-        .reset(reset),
-        .clk(clk),
-        .Address(Out),
-        .Write_data(Read_data2),
-        .Read_data(Read_data),
-        .MemRead(MemRead),
-        .MemWrite(MemWrite)
+    .reset(reset),
+    .clk(clk),
+    .Address(Out),
+    .Write_data(Read_data2),
+    .Read_data(Read_data),
+    .MemRead(MemRead),
+    .MemWrite(MemWrite)
     );
     
     // * Mux of ALU or mem
     always @(*) begin
-        case(MemtoReg) 
+        case(MemtoReg)
             1'b0: begin
                 Write_register_data <= Out;
             end
