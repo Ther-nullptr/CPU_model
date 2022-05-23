@@ -33,33 +33,38 @@ module Control(OpCode,
     parameter sw_op  = 6'h2b; // save word(I)
     parameter lui_op = 6'h0f; // load upper 16 bits of immediate(I)
     
-    parameter add_op   = 6'h00; // add(R)
-    parameter addu_op  = 6'h00; // add unsigned #! u(R)
-    parameter sub_op   = 6'h00; // sub(R)
-    parameter subu_op  = 6'h00; // sub unsigned #! u(R)
     parameter addi_op  = 6'h08; // add immediate(I)
     parameter addiu_op = 6'h09; // add immediate unsigned #! u(I)
     
-    parameter and_op   = 6'h00; // and(R)
-    parameter or_op    = 6'h00; // or(R)
-    parameter xor_op   = 6'h00; // xor(R)
-    parameter nor_op   = 6'h00; // nor(R)
     parameter andi_op  = 6'h0c; // and immediate(I)
-    parameter sll_op   = 6'h00; // shift left logical(R)
-    parameter srl_op   = 6'h00; // shift right logical(R)
-    parameter sra_op   = 6'h00; // shift right algorithm(R)
-    parameter slt_op   = 6'h00; // set on less than(R)
-    parameter sltu_op  = 6'h00; // set on less than unsigned #! u(R)
     parameter slti_op  = 6'h0a; // set on less than immediate(I)
     parameter sltiu_op = 6'h0b; // set on less than immediate unsigned #! u(I)
     
-    parameter beq_op  = 6'h04; // branch equal(I)
-    parameter j_op    = 6'h02; // jump(J)
-    parameter jal_op  = 6'h03; // jump and link(J)
-    parameter jr_op   = 6'h00; // jump register(R)
-    parameter jalr_op = 6'h00; // (R)
+    parameter beq_op = 6'h04; // branch equal(I)
+    parameter j_op   = 6'h02; // jump(J)
+    parameter jal_op = 6'h03; // jump and link(J)
     
     parameter R_op = 6'h00; // represent for all R-types
+    
+    // MIPS Functs
+    parameter add_fun  = 6'h20;
+    parameter addu_fun = 6'h21; //! u
+    parameter sub_fun  = 6'h22;
+    parameter subu_fun = 6'h23; //! u
+    
+    parameter and_fun = 6'h24;
+    parameter or_fun  = 6'h25;
+    parameter xor_fun = 6'h26;
+    parameter nor_fun = 6'h27;
+    
+    parameter sll_fun  = 6'h00;
+    parameter srl_fun  = 6'h02;
+    parameter sra_fun  = 6'h03;
+    parameter slt_fun  = 6'h2a;
+    parameter sltu_fun = 6'h2b; //! u
+    
+    parameter jr_fun   = 6'h08;
+    parameter jalr_fun = 6'h09;
     
     initial begin
         PCSrc    <= 0;
@@ -78,12 +83,19 @@ module Control(OpCode,
     always @(*) begin
         // PCSrc
         case(OpCode)
-            j_op,jal_op: begin // all the R type
+            j_op,jal_op: begin
                 PCSrc <= 2'b01;
             end
             
-            jr_op,jalr_op: begin
-                PCSrc <= 2'b10;
+            R_op: begin
+                case(Funct)
+                    jr_fun,jalr_fun:begin
+                        PCSrc <= 2'b10;
+                    end
+                    default:begin
+                        PCSrc <= 2'b00;
+                    end
+                endcase
             end
             
             default: begin
@@ -98,14 +110,25 @@ module Control(OpCode,
             end
             
             default:begin
-                PCSrc <= 1'b0;
+                Branch <= 1'b0;
             end
         endcase
         
         // RegWrite
         case(OpCode)
-            sw_op,beq_op,j_op,jr_op:begin
+            sw_op,beq_op,j_op:begin
                 RegWrite <= 0;
+            end
+            
+            R_op:begin
+                case(Funct)
+                    jr_fun:begin
+                        RegWrite <= 0;
+                    end
+                    default:begin
+                        RegWrite <= 1;
+                    end
+                endcase
             end
             
             default:begin
@@ -116,10 +139,17 @@ module Control(OpCode,
         // RegDst
         case(OpCode)
             R_op:begin
-                RegDst <= 2'b01;
+                case(Funct)
+                    jalr_fun:begin
+                        RegDst <= 2'b10;
+                    end
+                    default:begin
+                        RegDst <= 2'b01;
+                    end
+                endcase
             end
             
-            jal_op,jalr_op:begin
+            jal_op:begin
                 RegDst <= 2'b10;
             end
             
@@ -142,11 +172,11 @@ module Control(OpCode,
         // MemWrite
         case(OpCode)
             sw_op:begin
-                MemRead <= 1;
+                MemWrite <= 1;
             end
             
             default:begin
-                MemRead <= 0;
+                MemWrite <= 0;
             end
         endcase
         
@@ -156,8 +186,19 @@ module Control(OpCode,
                 MemtoReg <= 2'b01;
             end
             
-            jal_op,jalr_op:begin
+            jal_op:begin
                 MemtoReg <= 2'b10;
+            end
+            
+            R_op:begin
+                case(Funct)
+                    jalr_fun:begin
+                        MemtoReg <= 2'b10;
+                    end
+                    default:begin
+                        MemtoReg <= 2'b01;
+                    end
+                endcase
             end
             
             default:begin
@@ -167,26 +208,33 @@ module Control(OpCode,
         
         // ALUSrc1
         case(OpCode)
-            sll_op,srl_op,sra_op:begin
-                ALUSrc1 <= 1;
+            R_op:begin
+                case(Funct)
+                    sll_fun,srl_fun,sra_fun:begin
+                        ALUSrc1 <= 1;
+                    end
+                    default:begin
+                        ALUSrc1 <= 0;
+                    end
+                endcase
             end
-
+            
             default:begin
                 ALUSrc1 <= 0;
             end
         endcase
-
+        
         // ALUSrc2
         case(OpCode)
             R_op:begin
                 ALUSrc2 <= 1;
             end
-
+            
             default:begin
                 ALUSrc2 <= 0;
             end
         endcase
-
+        
         // ExtOp
         case(OpCode)
             andi_op:begin
@@ -197,13 +245,13 @@ module Control(OpCode,
                 ExtOp <= 1;
             end
         endcase
-
+        
         // LuOp
         case(OpCode)
             lui_op:begin
                 LuOp <= 1;
             end
-
+            
             default:begin
                 LuOp <= 0;
             end

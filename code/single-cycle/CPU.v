@@ -5,7 +5,7 @@ module CPU(reset,
     //--------------Your code below-----------------------
 
     // PC
-    reg [31:0] PC_i = 32'b0;
+    wire [31:0] PC_i ;
     wire [31:0] PC_o;
 
     PC pc(
@@ -24,33 +24,32 @@ module CPU(reset,
     );
     
     // select the instruction type
-    reg [5:0] OpCode;
-    reg [4:0] Rs;
-    reg [4:0] Rt;
-    reg [4:0] Rd;
-    reg [4:0] Shamt;
-    reg [5:0] Funct;
-    reg [15:0] Immediate;
-    reg [26:0] Address;
-    always @(*) begin
-        OpCode <= Instruction[31:26];
-        Rs    <= Instruction[25:21];
-        Rt    <= Instruction[20:16];
-        Rd    <= Instruction[15:11];
-        Shamt <= Instruction[10:6];
-        Funct <= Instruction[5:0];
-        Immediate <= Instruction[15:0];
-        Address <= Instruction[25:0];
-    end
+    wire [5:0] OpCode;
+    wire [4:0] Rs;
+    wire [4:0] Rt;
+    wire [4:0] Rd;
+    wire [4:0] Shamt;
+    wire [5:0] Funct;
+    wire [15:0] Immediate;
+    wire [26:0] Address;
+    
+    assign OpCode = Instruction[31:26];
+    assign Rs    = Instruction[25:21];
+    assign Rt    = Instruction[20:16];
+    assign Rd    = Instruction[15:11];
+    assign Shamt = Instruction[10:6];
+    assign Funct = Instruction[5:0];
+    assign Immediate = Instruction[15:0];
+    assign Address = Instruction[25:0];
     
     // controller
     wire [1:0] PCSrc;
     wire Branch;
-    wire RegWrite;
-    wire [1:0] RegDst;
+    wire regWrite;
+    wire [1:0] regDst;
     wire MemRead;
     wire MemWrite;
-    wire [1:0] MemtoReg;
+    wire [1:0] Memtoreg;
     wire ALUSrc1;
     wire ALUSrc2;
     wire ExtOp;
@@ -60,11 +59,11 @@ module CPU(reset,
     .Funct(Funct),
     .PCSrc(PCSrc),
     .Branch(Branch),
-    .RegWrite(RegWrite),
-    .RegDst(RegDst),
+    .RegWrite(regWrite),
+    .RegDst(regDst),
     .MemRead(MemRead),
     .MemWrite(MemWrite),
-    .MemtoReg(MemtoReg),
+    .MemtoReg(Memtoreg),
     .ALUSrc1(ALUSrc1),
     .ALUSrc2(ALUSrc2),
     .ExtOp(ExtOp),
@@ -78,59 +77,33 @@ module CPU(reset,
     wire [31:0] ImmExtOut;
     wire [31:0] ImmExtShift;
     wire [31:0] Read_data1, Read_data2;
-    always @(*) begin
-        PC_i <= PC_o + 4; // add 4 first
-        case(PCSrc)
-            2'b00:begin
-                if (Branch & Zero) begin
-                    PC_i <= PC_i + ImmExtShift;
-                end
-                else begin
-                    PC_i <= PC_i;
-                end
-            end
-            
-            2'b01: begin // j or jal
-                PC_i <= {PC_i[31:28], Address, 2'b00};
-            end
-            
-            2'b10: begin
-                PC_i <= Read_data1;
-            end
-            
-            default: begin
-                PC_i <= PC_i;
-            end
-        endcase
-    end
+
+    wire [31:0] PC_default_next; 
+    assign PC_default_next = PC_o + 4;
+
+    assign PC_i = 
+        (PCSrc == 2'b01) ? {PC_default_next[31:28], Address, 2'b00} :
+        (PCSrc == 2'b10) ? Read_data1 :
+        (Branch & Zero) ? PC_default_next + ImmExtShift:
+        PC_default_next;
+
     
-    // * Mux of reg source
-    reg [4:0] Read_register1, Read_register2, Write_register;
-    always @(*) begin
-        Read_register1 <= Rs;
-        Read_register2 <= Rt;
-    end
-    reg [31:0] Write_register_data;
-    always @(*) begin
-        case(RegDst)
-            2'b00:begin
-                Write_register <= Rt;
-            end
-            
-            2'b01:begin
-                Write_register <= Rd;
-            end
-            
-            default:begin
-                Write_register <= 5'b11111; // ra
-            end
-        endcase
-    end
+    // * Mux of wire source
+    wire [4:0] Read_register1, Read_register2, Write_register;
+    wire [31:0] Write_register_data;
+    assign Read_register1 = Rs;
+    assign Read_register2 = Rt;
+
+    assign Write_register = 
+        (regDst == 2'b00) ? Rt :
+        (regDst == 2'b01) ? Rd :
+        5'b11111;
     
     // register file
     RegisterFile registerfile(
     .reset(reset),
     .clk(clk),
+    .RegWrite(regWrite),
     .Read_register1(Read_register1),
     .Read_register2(Read_register2),
     .Write_register(Write_register),
@@ -150,30 +123,16 @@ module CPU(reset,
     );
     
     
-    // * Mux of imm or reg
-    reg [31:0] in1;
-    reg [31:0] in2;
-    always @(*) begin
-        case(ALUSrc1)
-            2'b0:begin
-                in1 <= Read_data1;
-            end
-            
-            2'b1:begin
-                in1 <= Shamt; // load the shamt
-            end
-        endcase
-        
-        case(ALUSrc2)
-            2'b0:begin
-                in2 <= Read_data2;
-            end
-            
-            2'b1:begin
-                in2 <= ImmExtOut;
-            end
-        endcase
-    end
+    // * Mux of imm or wire
+    wire [31:0] in1;
+    wire [31:0] in2;
+
+    assign in1 = 
+        (ALUSrc1 == 1'b0) ? Read_data1 :
+        Shamt;
+    assign in2 = 
+        (ALUSrc2 == 1'b0) ? Read_data2 :
+        ImmExtOut;
     
     // ALU controller
     wire [4:0] ALUCtrl;
@@ -210,16 +169,9 @@ module CPU(reset,
     );
     
     // * Mux of ALU or mem
-    always @(*) begin
-        case(MemtoReg)
-            1'b0: begin
-                Write_register_data <= Out;
-            end
-            1'b1: begin
-                Write_register_data <= Read_data;
-            end
-        endcase
-    end
+    assign Write_register_data = 
+        (Memtoreg == 1'b0) ? Out :
+        Read_data;
     
     //--------------Your code above-----------------------
     
