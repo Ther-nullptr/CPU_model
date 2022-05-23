@@ -19,7 +19,6 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
 module ImmProcess(ExtOp, LuiOp, Immediate, ImmExtOut, ImmExtShift); 
     //Input Control Signals
     input ExtOp; //'0'-zero extension, '1'-signed extension

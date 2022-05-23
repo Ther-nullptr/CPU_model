@@ -3,6 +3,8 @@ module CPU(reset,
     input reset, clk;
     
     //--------------Your code below-----------------------
+
+    // initialize
     
     // PC
     reg [31:0] PC_i;
@@ -118,7 +120,7 @@ module CPU(reset,
     
     // * Mux of reg source
     reg [4:0] Read_register1, Read_register2, Write_register;
-    reg [31:0] Write_data_register;
+    reg [4:0] Write_register_data;
     always @(*) begin
         case(RegDst)
         2'b00:begin
@@ -142,7 +144,7 @@ module CPU(reset,
         .Read_register1(Read_register1),
         .Read_register2(Read_register2),
         .Write_register(Write_register),
-        .Write_data(Write_data_register),
+        .Write_data(Write_register_data),
         .Read_data1(Read_data1),
         .Read_data2(Read_data2)
     );
@@ -221,10 +223,10 @@ module CPU(reset,
     always @(*) begin
         case(MemtoReg) 
             1'b0: begin
-                Write_data_register <= Out;
+                Write_register_data <= Out;
             end
             1'b1: begin
-                Write_data_register <= Read_data;
+                Write_register_data <= Read_data;
             end
         endcase
     end

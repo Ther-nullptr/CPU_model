@@ -28,6 +28,9 @@ module PC(reset, clk, PC_i, PC_o);
     //Output PC  
     output reg [31:0] PC_o; 
 
+    initial begin
+        PC_o <= 0;
+    end
 
     always@(posedge reset or posedge clk)
     begin

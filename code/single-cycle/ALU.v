@@ -1,4 +1,4 @@
-
+`timescale 1ns / 1ps
 module ALU(in1, in2, ALUCtrl, Sign, out, zero);
 	input [31:0] in1, in2;
 	input [4:0] ALUCtrl;
@@ -53,7 +53,6 @@ module ALU(in1, in2, ALUCtrl, Sign, out, zero);
             default: out <= 0;
         endcase
     end
-	     
 	// Your code above
 	
 endmodule
