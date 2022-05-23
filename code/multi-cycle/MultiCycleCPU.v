@@ -28,19 +28,19 @@ module MultiCycleCPU (reset,
     //--------------Your code below-----------------------
     
     // Controller
-    reg [5:0] OpCode;
-    reg [4:0] Rs;
-    reg [4:0] Rt;
-    reg [4:0] Rd;
-    reg [4:0] Shamt;
-    reg [5:0] Funct;
-    reg [1:0] PCSrc;
-    reg [3:0] ALUOp;
-    reg [15:0] Immediate;
-    reg [26:0] Address_j;
+    wire [5:0] OpCode;
+    wire [4:0] Rs;
+    wire [4:0] Rt;
+    wire [4:0] Rd;
+    wire [4:0] Shamt;
+    wire [5:0] Funct;
+    wire [1:0] PCSrc;
+    wire [3:0] ALUOp;
+    wire [15:0] Immediate;
+    wire [26:0] Address_j;
     
     wire PCWrite;
-    reg PCWrite_with_cond;
+    wire PCWrite_with_cond;
     wire Branch;
     wire RegWrite;
     wire IorD;
@@ -78,7 +78,7 @@ module MultiCycleCPU (reset,
     );
     
     // PC
-    reg [31:0] PC_i;
+    wire [31:0] PC_i;
     wire [31:0] PC_o;
     PC pc(
     .reset(reset),
@@ -88,21 +88,16 @@ module MultiCycleCPU (reset,
     .PC_o(PC_o)
     );
     
-    reg [31:0] Address;
+    wire [31:0] Address;
     wire [31:0] Write_data;
     wire [31:0] Mem_data;
     wire [31:0] ALUOut;
     wire [31:0] ALUOut_register_data;
     
     // * Mux of choose Data or Instruction in memory
-    always @(*) begin
-        if (IorD == 1'b0) begin // load instruction
-            Address[31:0] <= PC_o[31:0];
-        end
-        else begin
-            Address[31:0] <= ALUOut_register_data[31:0];
-        end
-    end
+    assign Address[31:0] =
+        (IorD == 1'b0)? PC_o[31:0] : 
+        ALUOut_register_data[31:0];
     
     // memory
     InstAndDataMemory instanddatamemory(
@@ -129,10 +124,9 @@ module MultiCycleCPU (reset,
     .Funct(Funct)
     );
 
-    always @(*) begin
-        Immediate[15:0] <= {Rd[5:0], Shamt[4:0], Funct[5:0]};
-        Address_j[26:0] <= {Rt[4:0], Rs[4:0], Immediate[15:0]};
-    end
+    
+    assign Immediate[15:0] = {Rd[5:0], Shamt[4:0], Funct[5:0]};
+    assign Address_j[26:0] = {Rt[4:0], Rs[4:0], Immediate[15:0]};
     
     // memory data register
     wire [31:0] Data;
@@ -143,38 +137,20 @@ module MultiCycleCPU (reset,
     .Data_o(Data)
     );
     
-    // * Mux of reg source
+    // * Mux of wire source
     wire [31:0] Read_data1, Read_data2;
-    reg [4:0] Read_register1, Read_register2, Write_register;
-    always @(*) begin
-        case(RegDst)
-            2'b00:begin
-                Write_register <= Rt;
-            end
-            
-            2'b01:begin
-                Write_register <= Rd;
-            end
-            
-            default:begin
-                Write_register <= 5'b11111; // ra
-            end
-        endcase
-    end
+    wire [4:0] Read_register1, Read_register2, Write_register;
+
+    assign Write_register = 
+        (RegDst == 2'b00)? Rt:
+        (RegDst == 2'b01)? Rd:
+        5'b11111;
     
     // * Mux of write data source
-    reg [31:0] Write_register_data;
-    always @(*) begin
-        case(MemtoReg)
-            1'b0:begin
-                Write_register_data[31:0] <= Data[31:0];
-            end
-            
-            1'b1:begin
-                Write_register_data[31:0] <= ALUOut[31:0];
-            end
-        endcase
-    end
+    wire [31:0] Write_register_data;
+    assign Write_register_data = 
+        (MemtoReg == 1'b0)? Data:
+        ALUOut;
     
     wire [31:0] ImmExtOut;
     wire [31:0] ImmExtShift;
@@ -217,56 +193,21 @@ module MultiCycleCPU (reset,
     .Sign(Sign)
     );
 
-    reg [31:0] in1;
-    reg [31:0] in2;
+    wire [31:0] in1;
+    wire [31:0] in2;
 
     // * Mux of ALU in1
-    always @(*) begin
-        case(ALUSrc1)
-            2'b00:begin // use PC
-                in1 <= PC_o;
-            end 
-
-            2'b01:begin // use Read_register_data1
-                in1 <= Read_register_data1;
-            end
-
-            2'b10:begin // use shamt
-                in1 <= Shamt;
-            end
-
-            default:begin
-                in1 <= Read_register_data1;
-            end
-
-        endcase
-    end
+    assign in1 = 
+        (ALUSrc1 == 2'b00)? PC_o:
+        (ALUSrc1 == 2'b10)? Shamt:
+        Read_register_data1;
 
     // * Mux of ALU in2
-    always @(*) begin
-        case(ALUSrc2)
-            2'b00:begin
-                in2 <= Read_register_data2; // use Read_register_data1
-            end
-
-            2'b01:begin
-                in2 <= 32'h4; // PC <= PC + 4
-            end
-
-            2'b10:begin
-                in2 <= ImmExtOut; // imm without shift
-            end
-
-            2'b11:begin
-                in2 <= ImmExtShift; // imm after shift
-            end
-
-            default:begin
-                in2 <= Read_register_data2;
-            end
-
-        endcase
-    end
+    assign in2 = 
+        (ALUSrc2 == 2'b00)? Read_register_data2:
+        (ALUSrc2 == 2'b01)? 32'h4:
+        (ALUSrc2 == 2'b10)? ImmExtOut:
+        ImmExtShift;
     
     // ALU
     wire Zero;
@@ -287,37 +228,15 @@ module MultiCycleCPU (reset,
 
     // * Mux of PC
     // TODO do not understand the logic
-    always @(*) begin
-        case(PCSrc)
-        2'b00:begin // from ALU(include PC+4 and jr&jalr)
-            PC_i[31:0] <= ALUOut[31:0];
-        end
+    assign PC_i = 
+        (PCSrc == 2'b00)? ALUOut:
+        (PCSrc == 2'b01)? ALUOut_register_data:
+        {PC_o[31:28],Address_j,2'b00};
 
-        2'b01:begin // beq
-            PC_i[31:0] <= ALUOut_register_data[31:0];
-        end
-
-        2'b10:begin // j & jal
-            PC_i[31:0] <= {PC_o[31:28],Address_j,2'b00};
-        end
-
-        default:begin
-            PC_i[31:0] <= ALUOut_register_data[31:0];
-        end
-
-        endcase
-    end
-
-    // control signal of PC
-    always @(*) begin
-        if((Zero && PCWriteCond)||PCWrite)begin
-            PCWrite_with_cond <= 1;
-        end
-        else begin
-            PCWrite_with_cond <= 0;
-        end
-    end
-
+    // generate control signal of PC
+    assign PCWrite_with_cond = 
+        ((Zero && PCWriteCond)||PCWrite)? 1'b1:
+        1'b0;
     
     //--------------Your code above-----------------------
 endmodule
