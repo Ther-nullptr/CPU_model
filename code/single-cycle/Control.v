@@ -196,13 +196,13 @@ module Control(OpCode,
                         MemtoReg <= 2'b10;
                     end
                     default:begin
-                        MemtoReg <= 2'b01;
+                        MemtoReg <= 2'b00;
                     end
                 endcase
             end
             
             default:begin
-                MemtoReg <= 2'b01;
+                MemtoReg <= 2'b00;
             end
         endcase
         
@@ -226,12 +226,12 @@ module Control(OpCode,
         
         // ALUSrc2
         case(OpCode)
-            R_op:begin
-                ALUSrc2 <= 1;
+            R_op,beq_op:begin
+                ALUSrc2 <= 0;
             end
             
             default:begin
-                ALUSrc2 <= 0;
+                ALUSrc2 <= 1;
             end
         endcase
         

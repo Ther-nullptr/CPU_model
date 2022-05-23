@@ -170,8 +170,9 @@ module CPU(reset,
     
     // * Mux of ALU or mem
     assign Write_register_data = 
-        (Memtoreg == 1'b0) ? Out :
-        Read_data;
+        (Memtoreg == 2'b00) ? Out :
+        (Memtoreg == 2'b01) ? Read_data :
+        PC_default_next;
     
     //--------------Your code above-----------------------
     

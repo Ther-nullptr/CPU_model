@@ -21,14 +21,14 @@ module RegisterFile(reset,
     
     integer i;
     always @(posedge reset or posedge clk) begin
-        if (reset)
-            for (i = 1; i < 32; i = i + 1) begin
-                RF_data[i] <= 32'h00000000;
-            end
-                else if (RegWrite && (Write_register != 5'b00000))begin
-                RF_data[Write_register] <= Write_data;
-            end
-    end
+		if (reset) begin
+			for (i = 1; i < 32; i = i + 1) begin
+				RF_data[i] <= 32'h00000000;
+			end
+		end else if (RegWrite && (Write_register != 5'b00000)) begin
+			RF_data[Write_register] <= Write_data;
+		end
+	end
     
 endmodule
     
