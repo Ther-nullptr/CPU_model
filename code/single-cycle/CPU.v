@@ -1,6 +1,9 @@
 module CPU(reset,
-           clk);
+           clk,
+           output1,
+           output2);
     input reset, clk;
+    output [31:0] output1, output2;
     
     //--------------Your code below-----------------------
 
@@ -173,6 +176,10 @@ module CPU(reset,
         (Memtoreg == 2'b00) ? Out :
         (Memtoreg == 2'b01) ? Read_data :
         PC_default_next;
+
+    // output
+    assign output1=registerfile.RF_data[2];
+    assign output2=registerfile.RF_data[4];
     
     //--------------Your code above-----------------------
     
