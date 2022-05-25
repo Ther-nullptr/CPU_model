@@ -88,9 +88,9 @@ module Controller(reset,
             RegWrite    <= 1'b0;
             ExtOp       <= 1'b0;
             LuiOp       <= 1'b0;
-            ALUSrcA     <= 2'b0;
-            ALUSrcB     <= 2'b0;
-            PCSource    <= 2'b0;
+            ALUSrcA     <= 2'b00;
+            ALUSrcB     <= 2'b00;
+            PCSource    <= 2'b00;
         end
         else
         begin
@@ -148,13 +148,13 @@ module Controller(reset,
                 case(Funct)
                     6'h08: //* jr
                     begin
-                        PCSource   <= 2'b00;
+                        PCSource   <= 2'b11;
                         PCWrite    <= 1'b1;
                         next_state <= sIF;
                     end
                     6'h09: //* jalr
                     begin
-                        PCSource   <= 2'b00;
+                        PCSource   <= 2'b11;
                         PCWrite    <= 1'b1;
                         next_state <= sIF;
                         
@@ -235,7 +235,7 @@ module Controller(reset,
             MemRead    <= 1'b1;
             IorD       <= 1'b1;
             IRWrite    <= 1'b0;
-            next_state <= next_state +3'b001;
+            next_state <= next_state + 3'b001;
         end
         default:
         begin
@@ -294,9 +294,6 @@ module Controller(reset,
                 end
                 6'h0b:begin // sltiu
                     ALUOp[2:0] <= slt_op;
-                end
-                6'h09:begin // addiu
-                    ALUOp[2:0] <= addiu_op;
                 end
                 default:begin
                     ALUOp[2:0] <= I1_op;

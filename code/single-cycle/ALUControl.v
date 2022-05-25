@@ -136,9 +136,12 @@ module ALUControl(OpCode,
                 nor_fun:ALUCtrl <= nor_ctrl;
                 
                 slt_fun:ALUCtrl <= slt_ctrl;
+                sltu_fun:ALUCtrl <= slt_ctrl;
                 sll_fun:ALUCtrl <= sll_ctrl;
                 srl_fun:ALUCtrl <= srl_ctrl;
                 sra_fun:ALUCtrl <= sra_ctrl;
+
+                default:ALUCtrl <= add_ctrl;
             endcase
         end
         else if (ALUOp == 3'b000) // use add

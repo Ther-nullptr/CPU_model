@@ -77,6 +77,7 @@ module ALUControl(ALUOp,
     
     // step 1: to decide the signed & unsigned
     // I type
+    
     always @(*) begin
         case(ALUOp[3])
             1'b0:Sign <= 1;
@@ -98,7 +99,7 @@ module ALUControl(ALUOp,
     
     // step 2: generate ALUConf according to Funct
     always @(*) begin
-        if (ALUOp == 3'b010) begin
+        if (ALUOp == 3'b010) begin // R type, decide the ALUConf by Funct
             case(Funct)
                 add_fun:ALUConf  <= add_ctrl;
                 addu_fun:ALUConf <= add_ctrl;
@@ -110,10 +111,11 @@ module ALUControl(ALUOp,
                 xor_fun:ALUConf <= xor_ctrl;
                 nor_fun:ALUConf <= nor_ctrl;
                 
-                slt_fun:ALUConf <= slt_ctrl;
-                sll_fun:ALUConf <= sll_ctrl;
-                srl_fun:ALUConf <= srl_ctrl;
-                sra_fun:ALUConf <= sra_ctrl;
+                slt_fun:ALUConf  <= slt_ctrl;
+                sltu_fun:ALUConf <= slt_ctrl;
+                sll_fun:ALUConf  <= sll_ctrl;
+                srl_fun:ALUConf  <= srl_ctrl;
+                sra_fun:ALUConf  <= sra_ctrl;
             endcase
         end
         else if (ALUOp == 3'b000) // use add

@@ -1,4 +1,4 @@
-	addi $a0, $zero, 10 # a0 = 0 + 5
+	addi $a0, $zero, 5 # a0 = 0 + 5
     # {6'h08, 5'd0, 5'd4, 16'ha}
 	xor $v0, $zero, $zero # v0 = 0 ^ 0 = 0
     # {6'h00, 5'd0, 5'd0, 5'd0, 5'd0, 6'h26}
@@ -24,7 +24,7 @@ sum:
     # {6'h0, 5'd31, 15'h0, 6'h08}
 L1:
 	add $v0, $a0, $v0 # v0 = a0 + v0
-    # {6'h00, 5'd8, 5'd4, 5'd4, 5'd0, 6'h20}
+    # {6'h00, 5'd4, 5'd2, 5'd2, 5'd0, 6'h20}
 	addi $a0, $a0, -1 # a0 = a0 - 1
     # {6'h08, 5'd4, 5'd4, 16'hffff}
 	jal sum # call sum function

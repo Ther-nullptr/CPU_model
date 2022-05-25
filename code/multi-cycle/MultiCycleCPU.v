@@ -34,14 +34,14 @@ module MultiCycleCPU (reset,
     wire [4:0] Rd;
     wire [4:0] Shamt;
     wire [5:0] Funct;
-    wire [1:0] PCSrc;
-    wire [3:0] ALUOp;
     wire [15:0] Immediate;
     wire [26:0] Address_j;
     
+    wire [1:0] PCSrc;
+    wire [3:0] ALUOp;
     wire PCWrite;
     wire PCWrite_with_cond;
-    wire Branch;
+    wire PCWriteCond;
     wire RegWrite;
     wire IorD;
     wire IRWrite;
@@ -49,8 +49,8 @@ module MultiCycleCPU (reset,
     wire MemRead;
     wire MemWrite;
     wire [1:0] MemtoReg;
-    wire ALUSrc1;
-    wire ALUSrc2;
+    wire [1:0] ALUSrc1;
+    wire [1:0] ALUSrc2;
     wire ExtOp;
     wire LuiOp;
     
@@ -63,8 +63,7 @@ module MultiCycleCPU (reset,
     .PCWriteCond(PCWriteCond),
     .IorD(IorD),
     .IRWrite(IRWrite),
-    .PCSrc(PCSrc),
-    .Branch(Branch),
+    .PCSource(PCSrc),
     .RegWrite(RegWrite),
     .RegDst(RegDst),
     .MemRead(MemRead),
@@ -80,7 +79,7 @@ module MultiCycleCPU (reset,
     // PC
     wire [31:0] PC_i;
     wire [31:0] PC_o;
-    PC pc(
+    PC Pc(
     .reset(reset),
     .clk(clk),
     .PCWrite(PCWrite_with_cond),
@@ -95,12 +94,12 @@ module MultiCycleCPU (reset,
     wire [31:0] ALUOut_register_data;
     
     // * Mux of choose Data or Instruction in memory
-    assign Address[31:0] =
-        (IorD == 1'b0)? PC_o[31:0] : 
-        ALUOut_register_data[31:0];
+    assign Address = 
+    (IorD == 1'b0)? PC_o :
+    ALUOut_register_data;
     
     // memory
-    InstAndDataMemory instanddatamemory(
+    InstAndDataMemory Instanddatamemory(
     .reset(reset),
     .clk(clk),
     .Address(Address),
@@ -111,7 +110,7 @@ module MultiCycleCPU (reset,
     );
     
     // instruction register
-    InstReg instreg(
+    InstReg Instreg(
     .reset(reset),
     .clk(clk),
     .IRWrite(IRWrite),
@@ -123,14 +122,14 @@ module MultiCycleCPU (reset,
     .Shamt(Shamt),
     .Funct(Funct)
     );
-
     
-    assign Immediate[15:0] = {Rd[5:0], Shamt[4:0], Funct[5:0]};
-    assign Address_j[26:0] = {Rt[4:0], Rs[4:0], Immediate[15:0]};
+    
+    assign Immediate = {Rd[4:0], Shamt[4:0], Funct[5:0]};
+    assign Address_j = {Rs[4:0], Rt[4:0], Immediate[15:0]};
     
     // memory data register
     wire [31:0] Data;
-    RegTemp regtemp(
+    RegTemp Memory_data_register(
     .reset(reset),
     .clk(clk),
     .Data_i(Mem_data),
@@ -140,25 +139,28 @@ module MultiCycleCPU (reset,
     // * Mux of wire source
     wire [31:0] Read_data1, Read_data2;
     wire [4:0] Read_register1, Read_register2, Write_register;
-
+    assign Read_register1 = Rs;
+    assign Read_register2 = Rt;
+    
     assign Write_register = 
-        (RegDst == 2'b00)? Rt:
-        (RegDst == 2'b01)? Rd:
-        5'b11111;
+    (RegDst == 2'b00)? Rt:
+    (RegDst == 2'b01)? Rd:
+    5'b11111; // $ra
     
     // * Mux of write data source
     wire [31:0] Write_register_data;
     assign Write_register_data = 
-        (MemtoReg == 1'b0)? Data:
-        ALUOut;
+    (MemtoReg == 2'b00)? Data:
+    (MemtoReg == 2'b01)? ALUOut_register_data:
+    PC_o;
     
     wire [31:0] ImmExtOut;
     wire [31:0] ImmExtShift;
     
     // immediate extension
-    ImmProcess immprocess(
+    ImmProcess Immprocess(
     .ExtOp(ExtOp),
-    .LuiOp(LuOp),
+    .LuiOp(LuiOp),
     .Immediate(Immediate),
     .ImmExtOut(ImmExtOut),
     .ImmExtShift(ImmExtShift)
@@ -166,9 +168,10 @@ module MultiCycleCPU (reset,
     
     
     // register file
-    RegisterFile registerfile(
+    RegisterFile Registerfile(
     .reset(reset),
     .clk(clk),
+    .RegWrite(RegWrite),
     .Read_register1(Read_register1),
     .Read_register2(Read_register2),
     .Write_register(Write_register),
@@ -180,63 +183,66 @@ module MultiCycleCPU (reset,
     //? register of Read Data1(A) and Read Data2(B)
     wire [31:0] Read_register_data1;
     wire [31:0] Read_register_data2;
-    RegTemp Read_data_1_Register(reset, clk, Read_data1, Read_register_data1);
-    RegTemp Read_data_2_Register(reset, clk, Read_data2, Read_data2_register);
-
+    
+    RegTemp Read_data_1_Register(.reset(reset), .clk(clk), .Data_i(Read_data1), .Data_o(Read_register_data1));
+    RegTemp Read_data_2_Register(.reset(reset), .clk(clk), .Data_i(Read_data2), .Data_o(Read_register_data2));
+    assign Write_data = Read_register_data2;
+    
     // ALU controller
     wire [4:0] ALUConf;
     wire Sign;
-    ALUControl aluControl(
+    ALUControl AluControl(
     .ALUOp(ALUOp),
     .Funct(Funct),
     .ALUConf(ALUConf),
     .Sign(Sign)
     );
-
+    
     wire [31:0] in1;
     wire [31:0] in2;
-
+    
     // * Mux of ALU in1
     assign in1 = 
-        (ALUSrc1 == 2'b00)? PC_o:
-        (ALUSrc1 == 2'b10)? Shamt:
-        Read_register_data1;
-
+    (ALUSrc1 == 2'b00)? PC_o:
+    (ALUSrc1 == 2'b10)? Shamt:
+    Read_register_data1;
+    
     // * Mux of ALU in2
     assign in2 = 
-        (ALUSrc2 == 2'b00)? Read_register_data2:
-        (ALUSrc2 == 2'b01)? 32'h4:
-        (ALUSrc2 == 2'b10)? ImmExtOut:
-        ImmExtShift;
+    (ALUSrc2 == 2'b00)? Read_register_data2:
+    (ALUSrc2 == 2'b01)? 32'h4:
+    (ALUSrc2 == 2'b10)? ImmExtOut:
+    ImmExtShift;
     
     // ALU
     wire Zero;
     ALU ALU(
-        .ALUConf(ALUConf),
-        .Sign(Sign),
-        .in1(in1),
-        .in2(in2),
-        .Zero(Zero),
-        .Result(ALUOut)
+    .ALUConf(ALUConf),
+    .Sign(Sign),
+    .in1(in1),
+    .in2(in2),
+    .Zero(Zero),
+    .Result(ALUOut)
     );
-
+    
     //? register of ALUOut
-    RegTemp ALU_Register(
-        reset, clk, ALUOut, ALUOut_register_data
+    RegTemp ALU_register(
+    reset, clk, ALUOut, ALUOut_register_data
     );
-
-
+    
+    
     // * Mux of PC
     // TODO do not understand the logic
     assign PC_i = 
-        (PCSrc == 2'b00)? ALUOut:
-        (PCSrc == 2'b01)? ALUOut_register_data:
-        {PC_o[31:28],Address_j,2'b00};
-
+    (PCSrc == 2'b00)? ALUOut:
+    (PCSrc == 2'b01)? ALUOut_register_data:
+    (PCSrc == 2'b10)? {PC_o[31:28],Address_j,2'b00}:
+    Read_register_data1;
+    
     // generate control signal of PC
     assign PCWrite_with_cond = 
-        ((Zero && PCWriteCond)||PCWrite)? 1'b1:
-        1'b0;
+    ((Zero && PCWriteCond)||PCWrite)? 1'b1:
+    1'b0;
     
     //--------------Your code above-----------------------
 endmodule

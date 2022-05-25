@@ -55,7 +55,7 @@ module InstAndDataMemory(reset, clk, Address, Write_data, MemRead, MemWrite, Mem
             RAM_data[8'd2] <= {6'h03, 26'h4};
             // Loop:
             // beq $zero, $zero, Loop
-            RAM_data[8'd3] <= {6'h04, 5'd0, 5'd0, 16'h3};
+            RAM_data[8'd3] <= {6'h04, 5'd0, 5'd0, 16'hffff};
             // sum:
             // addi $sp, $sp, -8 # decrement stack pointer
             RAM_data[8'd4] <= {6'h08, 5'd29, 5'd29, 16'hfff8};
@@ -66,14 +66,14 @@ module InstAndDataMemory(reset, clk, Address, Write_data, MemRead, MemWrite, Mem
             // slti $t0, $a0, 1 # t0 = (a0 < 1) ? 1 : 0
             RAM_data[8'd7] <= {6'h0a, 5'd4, 5'd8, 16'h1};
             // beq $t0, $zero, L1 # if t0 == 0, jump to L1
-            RAM_data[8'd8] <= {6'h04, 5'h8, 5'h0, 16'h11};
+            RAM_data[8'd8] <= {6'h04, 5'h8, 5'h0, 16'h2};
             // addi $sp, $sp, 8 # increment stack pointer
             RAM_data[8'd9] <= {6'h08, 5'd29, 5'd29, 16'h0008};
             // jr $ra # return from function
             RAM_data[8'd10] <= {6'h0, 5'd31, 15'h0, 6'h08};
             // L1:
             // add $v0, $a0, $v0 # v0 = a0 + v0
-            RAM_data[8'd11] <= {6'h00, 5'd8, 5'd4, 5'd4, 5'd0, 6'h20};
+            RAM_data[8'd11] <= {6'h00, 5'd4, 5'd2, 5'd2, 5'd0, 6'h20};
             // addi $a0, $a0, -1 # a0 = a0 - 1
             RAM_data[8'd12] <= {6'h08, 5'd4, 5'd4, 16'hffff};
             // jal sum # call sum function
@@ -83,9 +83,9 @@ module InstAndDataMemory(reset, clk, Address, Write_data, MemRead, MemWrite, Mem
             // lw $ra, 4($sp) # load return address
             RAM_data[8'd15] <= {6'h23, 5'd29, 5'd31, 16'h4};
             // addi $sp, $sp, 8 # increment stack pointer
-            RAM_data[8'd16] <= {6'h08, 5'd29, 5'd29, 16'h0008};
+            RAM_data[8'd16] <= {6'h08, 5'd29, 5'd29, 16'h8};
             // add $v0, $a0, $v0 # v0 = a0 + v0
-            RAM_data[8'd17] <= {6'h00, 5'd8, 5'd4, 5'd4, 5'd0, 6'h20};
+            RAM_data[8'd17] <= {6'h00, 5'd4, 5'd2, 5'd2, 5'd0, 6'h20};
             // jr $ra  # return from function
             RAM_data[8'd18] <= {6'h0, 5'd31, 15'h0, 6'h08};
 
