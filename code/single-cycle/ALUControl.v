@@ -84,26 +84,23 @@ module ALUControl(OpCode,
     // parameter setsub_ctrl = 5'b11010;
     
     // to decide the signed & unsigned
-    // I type
+    // R & I type
     always @(*) begin
         case(OpCode)
             addiu_op: Sign <= 0;
             sltiu_op: Sign <= 0;
+            R_op:begin
+                case(Funct)
+                    addu_fun: Sign <= 0;
+                    subu_fun: Sign <= 0;
+                    sltu_fun: Sign <= 0;
+                    default: Sign  <= 1;
+                endcase
+            end
             default: Sign  <= 1;
         endcase
     end
     
-    // R type
-    always @(*) begin
-        if (OpCode == 6'h00) begin
-            case(Funct)
-                addu_fun: Sign <= 0;
-                subu_fun: Sign <= 0;
-                sltu_fun: Sign <= 0;
-                default: Sign  <= 1;
-            endcase
-        end
-    end
     
     // step 1: generate ALUop according to OpCode
     always @(*) begin

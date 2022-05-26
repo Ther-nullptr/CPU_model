@@ -20,10 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module MultiCycleCPU (reset,
-                      clk);
+                      clk,
+                      output1,
+                      output2);
     //Input Clock Signals
     input reset;
     input clk;
+    output [31:0] output1, output2;
     
     //--------------Your code below-----------------------
     
@@ -243,6 +246,9 @@ module MultiCycleCPU (reset,
     assign PCWrite_with_cond = 
     ((Zero && PCWriteCond)||PCWrite)? 1'b1:
     1'b0;
+
+    assign output1=Registerfile.RF_data[2];
+    assign output2=Registerfile.RF_data[4];
     
     //--------------Your code above-----------------------
 endmodule

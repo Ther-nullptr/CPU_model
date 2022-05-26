@@ -178,8 +178,8 @@ module CPU(reset,
         PC_default_next;
 
     // output
-    assign output1=registerfile.RF_data[2];
-    assign output2=registerfile.RF_data[4];
+    assign output1=registerfile.RFData[2];
+    assign output2=registerfile.RFData[4];
     
     //--------------Your code above-----------------------
     

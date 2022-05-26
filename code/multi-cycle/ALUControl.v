@@ -76,17 +76,13 @@ module ALUControl(ALUOp,
     // parameter setsub_ctrl = 5'b11010;
     
     // step 1: to decide the signed & unsigned
-    // I type
+    // I & R type
     
     always @(*) begin
         case(ALUOp[3])
             1'b0:Sign <= 1;
             1'b1:Sign <= 0;
         endcase
-    end
-    
-    // R type
-    always @(*) begin
         if (ALUOp[2:0] == 3'b010) begin
             case(Funct)
                 addu_fun: Sign <= 0;
