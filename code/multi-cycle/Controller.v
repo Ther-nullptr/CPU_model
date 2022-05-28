@@ -223,7 +223,14 @@ module Controller(reset,
             IorD       <= 1'b1;
             next_state <= sIF;
         end
-        6'h08,6'h09,6'h0c,6'h0b,6'h0a,6'h0f: //* simple I type
+        6'h0f: //* lui
+        begin
+            RegWrite   <= 1'b1;
+            RegDst     <= 2'b00;
+            MemtoReg   <= 2'b11;
+            next_state <= sIF;
+        end
+        6'h08,6'h09,6'h0c,6'h0b,6'h0a: //* simple I type
         begin
             RegWrite   <= 1'b1;
             RegDst     <= 2'b00;

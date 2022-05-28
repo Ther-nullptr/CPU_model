@@ -189,6 +189,10 @@ module Control(OpCode,
             jal_op:begin
                 MemtoReg <= 2'b10;
             end
+
+            lui_op:begin
+                MemtoReg <= 2'b11;
+            end
             
             R_op:begin
                 case(Funct)

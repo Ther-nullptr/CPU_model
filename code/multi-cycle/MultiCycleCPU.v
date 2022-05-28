@@ -155,7 +155,9 @@ module MultiCycleCPU (reset,
     assign Write_register_data = 
     (MemtoReg == 2'b00)? Data:
     (MemtoReg == 2'b01)? ALUOut_register_data:
-    PC_o;
+    (MemtoReg == 2'b10)? PC_o:
+    (MemtoReg == 2'b11)? ImmExtOut:
+    Data;
     
     wire [31:0] ImmExtOut;
     wire [31:0] ImmExtShift;
